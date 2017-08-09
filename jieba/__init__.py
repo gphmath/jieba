@@ -168,12 +168,59 @@ class Tokenizer(object):
             self.initialize()
 
     def calc(self, sentence, DAG, route):
+        """
+        计算路径概率？
+        :param sentence: 
+        :param DAG: 
+        :param route: 
+        :return: 
+        """
         N = len(sentence)
         route[N] = (0, 0)
         logtotal = log(self.total)
+        # self.total = 60101967
+        # print('total = ',self.total)
+        # max(x,y,z)，接受多个参数，不是接受一个数组，
+        #
+        # 接受一个生成器（姑且看作元组），其中的元素是二元组(P(i:x+1)*route[x+1][Pr], x)
+        # 二元组的原因，前一元记录概率用比较筛选，后一元用来记录词组的位置
         for idx in xrange(N - 1, -1, -1):
-            route[idx] = max((log(self.FREQ.get(sentence[idx:x + 1]) or 1) -
-                              logtotal + route[x + 1][0], x) for x in DAG[idx])
+            route[idx] = max(                                      # 比较很多二元组，返回最大的二元组
+                (
+                    log(self.FREQ.get(sentence[idx:x + 1]) or 1)   # F(i:x+1)，从i到x组成词语的频数，如果不成词，就取1
+                    -
+                    logtotal                                       # 除以F总，字典中所有词的频数总和。F(i:x+1)/F=P(i:x+1)
+                    +
+                    route[x + 1][0]                                # 乘以route[x+1][0]，即后一个位置的最大二元组的第一元
+                    ,
+                    x
+                )
+                for x in DAG[idx]
+            )
+    # 老百姓大药房，6个字，N=6
+    # DAG = {0: [0, 2], 1: [1, 2], 2: [2], 3: [3], 4: [4, 5], 5: [5]}
+    # 计算route[i],i=5,4,3,2,1,0——和DAG一一对应
+    # 注意：这里是从后往前计算最大概率路径的。
+    # 每个位置不是有几种可能的组词吗？比如4: [4, 5], 5: [5]，表示【药，药房】，【房】
+    # 计算route[5]的时候，没得选，只有一个（这里为简便起见，都忽略对数）：(P(房)，5)
+    # 计算route[4]时候，x=4,5，2个候选元组：
+    # (P(药)*P(房),4); (P(药房)*1，5)——结果选概率大的，应该是后者概率大，所以route[4]=(P(药房)*1，5)
+    # 计算route[3]，x=3,没得选，route[3]=(P(大)*P(药房)*1,3)
+    # 计算route[2],x=2,没得选，route[2]=(P(姓)*P(大)*P(药房)*1,2)
+    # 计算route[1],x=1,2.有2个候选：
+    # (P(百)*P(姓)*P(大)*P(药房)*1,1); (P(百姓)*P(大)*P(药房)*1,2)——应该是后者大，route[1]=(P(百姓)*P(大)*P(药房)*1,2)
+    # 计算route[0],x=0,2,有2个候选：
+    # (P(老)*P(百姓)*P(大)*P(药房)*1,0); (P(老百姓)*P(大)*P(药房)*1,2)——应该是后者大,route[0]=(P(老百姓)*P(大)*P(药房)*1,2)
+    # 从而字典route=
+    # {
+    # 6: (0, 0),
+    # 5: (P(房), 5),
+    # 4: (P(药房)*1, 5),
+    # 3: (P(大)*P(药房)*1, 3),
+    # 2: (P(姓)*P(大)*P(药房)*1, 2),
+    # 1: (P(百姓)*P(大)*P(药房)*1, 2),
+    # 0: (P(老百姓)*P(大)*P(药房)*1, 2)
+    # }
 
     def get_DAG(self, sentence):
         """
@@ -211,14 +258,15 @@ class Tokenizer(object):
             while i < N and frag in self.FREQ:
                 if self.FREQ[frag]:
                     # print('词-词频',frag, self.FREQ[frag])
+                    # print('\'%s\':%d,'%(frag, self.FREQ[frag]))
                     tmplist.append(i)
                 i += 1
                 frag = sentence[k:i + 1]
             if not tmplist:
                 tmplist.append(k)
-            print('节点列表：',tmplist)
+            # print('节点列表：',tmplist)
             DAG[k] = tmplist
-        print('DAG=',DAG)
+        # print('DAG=',DAG)
         return DAG
 
     def __cut_all(self, sentence):

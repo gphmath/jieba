@@ -188,24 +188,43 @@ class POSTokenizer(object):
 
     def __cut_DAG(self, sentence):
         """
-        疑似构成词网
+        构成词网
         :param sentence: 
         :return: 
         """
         DAG = self.tokenizer.get_DAG(sentence)
+        # 获得了词网（记录了所有成词可能，但不计频数）
         route = {}
+        # 路径初始化！
 
         self.tokenizer.calc(sentence, DAG, route)
-
+        # print('计算后路径：', route)
+        # 从而字典route=
+        # {
+        # 6: (0, 0),
+        # 5: (P(房), 5),
+        # 4: (P(药房)*1, 5),
+        # 3: (P(大)*P(药房)*1, 3),
+        # 2: (P(姓)*P(大)*P(药房)*1, 2),
+        # 1: (P(百姓)*P(大)*P(药房)*1, 2),
+        # 0: (P(老百姓)*P(大)*P(药房)*1, 2)
+        # }
         x = 0
         buf = ''
         N = len(sentence)
         while x < N:
+            # y=route[0][1]+1 = 2+1 = 3,这是第二个词的开头位置
             y = route[x][1] + 1
+            # 下面就是第一个词
             l_word = sentence[x:y]
+            # print('l_word = ', l_word)
             if y - x == 1:
+                # 说明切出的是单字词,这时候要等等看和后面的能不能成词？
+                print('y-x=1,l_word=%s buf=%s' % (l_word,buf))
                 buf += l_word
+
             else:
+                print('y-x > 1,l_word=%s buf=%s' % (l_word,buf))
                 if buf:
                     if len(buf) == 1:
                         yield pair(buf, self.word_tag_tab.get(buf, 'x'))
@@ -218,6 +237,7 @@ class POSTokenizer(object):
                             yield pair(elem, self.word_tag_tab.get(elem, 'x'))
                     buf = ''
                 yield pair(l_word, self.word_tag_tab.get(l_word, 'x'))
+            # x设为下一个词的开头位置，进入下一个循环
             x = y
 
         if buf:
