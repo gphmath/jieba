@@ -177,11 +177,29 @@ class Tokenizer(object):
 
     def get_DAG(self, sentence):
         """
-        获取DAG初始化图，传入的句子，包括了用户自定义词典里的词条，和待分词的句子
-        :param sentence: 
-        :return: 
+        生成词网：每个字的位置有一个列表，列表里存储了从当前位置往后所有可能组成的词语及其在字典中的频数：
+        句子是：老百姓大药房：
+        【老，老百姓】
+        【百，百姓】
+        【姓】
+        【大】
+        【药，药房】
+        【房】
+        不过实际是转为位置编号而不是字符的
+        [0, 2]
+        [1, 2]
+        [2]
+        [3]
+        [4, 5]
+        [5]
+        从而DAG={0: [0, 2], 1: [1, 2], 2: [2], 3: [3], 4: [4, 5], 5: [5]}
+        传入的句子，包括了用户自定义词典里的词条，和待分词的句子
+        首先是jieba.__cut_DAG_NO_HMM依次传入用户词典中的所有词条
+        然后是posseg.__cut_DAG传入要分词的文本
+        :param sentence: 要分词的文本或者用户自定义词典的词条
+        :return: 粗分词网DAG是一个字典，键是每个字的位置，值是每个字位置的可能组词的位置
         """
-        print('DAG传入sentence = ',sentence)
+        print('DAG传入sentence = ', sentence)
         self.check_initialized()
         DAG = {}
         N = len(sentence)
@@ -192,13 +210,15 @@ class Tokenizer(object):
             # 句子的第k+1个字
             while i < N and frag in self.FREQ:
                 if self.FREQ[frag]:
-                    print('词-词频',frag, self.FREQ[frag])
+                    # print('词-词频',frag, self.FREQ[frag])
                     tmplist.append(i)
                 i += 1
                 frag = sentence[k:i + 1]
             if not tmplist:
                 tmplist.append(k)
+            print('节点列表：',tmplist)
             DAG[k] = tmplist
+        print('DAG=',DAG)
         return DAG
 
     def __cut_all(self, sentence):
