@@ -176,6 +176,12 @@ class Tokenizer(object):
                               logtotal + route[x + 1][0], x) for x in DAG[idx])
 
     def get_DAG(self, sentence):
+        """
+        获取DAG初始化图，传入的句子，包括了用户自定义词典里的词条，和待分词的句子
+        :param sentence: 
+        :return: 
+        """
+        print('DAG传入sentence = ',sentence)
         self.check_initialized()
         DAG = {}
         N = len(sentence)
@@ -183,8 +189,10 @@ class Tokenizer(object):
             tmplist = []
             i = k
             frag = sentence[k]
+            # 句子的第k+1个字
             while i < N and frag in self.FREQ:
                 if self.FREQ[frag]:
+                    print('词-词频',frag, self.FREQ[frag])
                     tmplist.append(i)
                 i += 1
                 frag = sentence[k:i + 1]
@@ -525,8 +533,8 @@ def _lcut_no_hmm(s):
     return dt._lcut_no_hmm(s)
 
 
-def _lcut_all(s):
-    return dt._lcut_all(s)
+# def _lcut_all(s):
+#     return dt._lcut_all(s)
 
 
 def _lcut_for_search(s):

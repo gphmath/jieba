@@ -13,12 +13,22 @@ PROB_EMIT_P = "prob_emit.p"
 CHAR_STATE_TAB_P = "char_state_tab.p"
 
 re_han_detail = re.compile("([\u4E00-\u9FD5]+)")
+# 所有中文字
+
 re_skip_detail = re.compile("([\.0-9]+|[a-zA-Z0-9]+)")
+# 数值(可以有小数点) 或者 字母加数字
+
 re_han_internal = re.compile("([\u4E00-\u9FD5a-zA-Z0-9+#&\._]+)")
+# 所有中文字、字母、数字、小数点还有+#&_
+
 re_skip_internal = re.compile("(\r\n|\s)")
+# 换行符或者空格
 
 re_eng = re.compile("[a-zA-Z0-9]+")
+# 字母和数字
+
 re_num = re.compile("[\.0-9]+")
+# 数值，可以有小数点
 
 re_eng1 = re.compile('^[a-zA-Z0-9]$', re.U)
 
@@ -34,15 +44,18 @@ def load_model():
 
 if sys.platform.startswith("java"):
     char_state_tab_P, start_P, trans_P, emit_P = load_model()
-else:
-    from .char_state_tab import P as char_state_tab_P
-    from .prob_start import P as start_P
-    from .prob_trans import P as trans_P
-    from .prob_emit import P as emit_P
+else:  # 当前Python是这个
+    from .char_state_tab import P as char_state_tab_P  # BMES和对应
+    from .prob_start import P as start_P  # 初始状态概率
+    from .prob_trans import P as trans_P  # 状态转移矩阵
+    from .prob_emit import P as emit_P  # 发射矩阵
 
 
 class pair(object):
-
+    """
+    pair类，王石/nr
+    词+词性，两个属性
+    """
     def __init__(self, word, flag):
         self.word = word
         self.flag = flag
@@ -172,7 +185,13 @@ class POSTokenizer(object):
             yield pair(buf, 'eng')
             buf = ''
 
+
     def __cut_DAG(self, sentence):
+        """
+        疑似构成词网
+        :param sentence: 
+        :return: 
+        """
         DAG = self.tokenizer.get_DAG(sentence)
         route = {}
 
@@ -213,30 +232,57 @@ class POSTokenizer(object):
                     yield pair(elem, self.word_tag_tab.get(elem, 'x'))
 
     def __cut_internal(self, sentence, HMM=True):
+        """
+        内部切词函数
+        :param sentence: 
+        :param HMM: 
+        :return: 
+        """
+        # 确保用户词典已加载
         self.makesure_userdict_loaded()
+        # 确保句子是str类型，如果是就不变，不是就解码成str
         sentence = strdecode(sentence)
+
         blocks = re_han_internal.split(sentence)
+        # 分割，把中文字母数字和.+#&_，作为分割的依据，分出的数组.
+        # 比如句子='今天，下雨了。'
+        # blocks = ['', '今天', '，', '下雨了', '。'] 5个元素
+        # 因为第一个字是中文字，属于分隔符，所以前面有个空字符。最后一个字不是，所以后面没有空字符
+        # print(blocks)
         if HMM:
             cut_blk = self.__cut_DAG
+        #     默认值是用了HMM了
         else:
             cut_blk = self.__cut_DAG_NO_HMM
 
         for blk in blocks:
+            # 遍历['', '今天', '，', '下雨了', '。'] ，有无标点正文，有标点符号，有空字符换行符
             if re_han_internal.match(blk):
+                # print('无标点正文：',blk)
+                # 是无标点正文：中文字母数字小数点+#&_
+                # 分词的关键部分
                 for word in cut_blk(blk):
                     yield word
             else:
+                # print('标点空格换行符：',blk)
+                # 标点符号或空字符、换行符
                 tmp = re_skip_internal.split(blk)
+                # 用空格换行符分割（因为可能标点符号和换行符空格连在一起）
                 for x in tmp:
                     if re_skip_internal.match(x):
+                        # 如果是空格和换行符，直接切出，标记词性为x
                         yield pair(x, 'x')
                     else:
+                        # 如果不是换行符和空格，
                         for xx in x:
+                            # 如果是数值型，返回词性为m
                             if re_num.match(xx):
                                 yield pair(xx, 'm')
+                            # 如果是英文，返回词性eng——这不可能，这属于正文，在上面处理的.
                             elif re_eng.match(x):
                                 yield pair(xx, 'eng')
                             else:
+                                # 未知词性，设为x
                                 yield pair(xx, 'x')
 
     def _lcut_internal(self, sentence):
@@ -246,7 +292,9 @@ class POSTokenizer(object):
         return list(self.__cut_internal(sentence, False))
 
     def cut(self, sentence, HMM=True):
+        # print('POSTokenizer.cut')
         for w in self.__cut_internal(sentence, HMM=HMM):
+            # print('POS分词切出一个词了：',w) #  的/uj
             yield w
 
     def lcut(self, *args, **kwargs):
@@ -276,9 +324,12 @@ def cut(sentence, HMM=True):
     Note that this only works using dt, custom POSTokenizer
     instances are not supported.
     """
+    # print('sentence = ', sentence)
     global dt
     if jieba.pool is None:
+        # 目前是这个
         for w in dt.cut(sentence, HMM=HMM):
+            # print('切出一个词了：',w) # 示例：的/uj，即：词/词性
             yield w
     else:
         parts = strdecode(sentence).splitlines(True)
@@ -293,3 +344,4 @@ def cut(sentence, HMM=True):
 
 def lcut(sentence, HMM=True):
     return list(cut(sentence, HMM))
+#  .....原来就是直接转成list，怪不得，里面和外面转list一样。。

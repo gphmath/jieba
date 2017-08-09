@@ -10,6 +10,8 @@ except ImportError:
     get_module_res = lambda *res: open(os.path.normpath(os.path.join(
                             os.getcwd(), os.path.dirname(__file__), *res)), 'rb')
 
+# version_info = (3, 6, 1, 'final', 0,),表示Python 3.6.1.0
+# 下面判断是否Python2
 PY2 = sys.version_info[0] == 2
 
 default_encoding = sys.getfilesystemencoding()
@@ -23,6 +25,7 @@ if PY2:
     iteritems = lambda d: d.iteritems()
 
 else:
+    # Python 3
     text_type = str
     string_types = (str,)
     xrange = range
@@ -32,6 +35,7 @@ else:
     iteritems = lambda d: iter(d.items())
 
 def strdecode(sentence):
+    # 如果是str类型，就不用管，直接返回
     if not isinstance(sentence, text_type):
         try:
             sentence = sentence.decode('utf-8')
