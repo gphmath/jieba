@@ -93,6 +93,8 @@ class POSTokenizer(object):
     def __init__(self, tokenizer=None):
         self.tokenizer = tokenizer or jieba.Tokenizer()
         self.load_word_tag(self.tokenizer.get_dict_file())
+        # 传入参数是f=open(dict_file_path, 'rb')的操作句柄f
+
 
     def __repr__(self):
         return '<POSTokenizer tokenizer=%r>' % self.tokenizer
@@ -106,20 +108,41 @@ class POSTokenizer(object):
     def initialize(self, dictionary=None):
         self.tokenizer.initialize(dictionary)
         self.load_word_tag(self.tokenizer.get_dict_file())
+        # 传入参数是f=open(dict_file_path, 'rb')的操作句柄f
 
     def load_word_tag(self, f):
+        """
+        加载词典，提取其中词-词性，不要频数信息，返回一个字典，键是词，值是词性——这个内置词典，每个词只有一种词性。。
+        :param f: 
+        :return: 词-词性字典
+        """
+        # f = open(dict_file_path, 'rb')
         self.word_tag_tab = {}
         f_name = resolve_filename(f)
-        for lineno, line in enumerate(f, 1):
+        # f_name=C:\Users\guoph@go-goal.com\PycharmProjects\jieba\jieba\dict.txt
+        # 这就是内置词典的完整路径
+        # print('f_name=%s'% f_name)
+        print(type(f))
+        for line_no, line in enumerate(f, 1):
+            # 设字典是这样：
+            # 就虚避实 3 i
+            # 就行了 3 l
+            # 就要 2328 d
+            # 则打印print(line_no, line)是这样：
+            # 1 就虚避实 3 i
+            # 2 就行了 3 l
+            # 3 就要 2328 d
             try:
                 line = line.strip().decode("utf-8")
                 if not line:
                     continue
                 word, _, tag = line.split(" ")
+                # 用空格分开：词 频数 词性
+                # 把word_tag_tab字典，赋值，键为词，值为词性
                 self.word_tag_tab[word] = tag
             except Exception:
                 raise ValueError(
-                    'invalid POS dictionary entry in %s at Line %s: %s' % (f_name, lineno, line))
+                    'invalid POS dictionary entry in %s at Line %s: %s' % (f_name, line_no, line))
         f.close()
 
     def makesure_userdict_loaded(self):
@@ -219,16 +242,20 @@ class POSTokenizer(object):
             l_word = sentence[x:y]
             # print('l_word = ', l_word)
             if y - x == 1:
-                # 说明切出的是单字词,这时候要等等看和后面的能不能成词？
+                # 说明切出的是单字词,不过这里先不处理，后面一起判断处理
                 print('y-x=1,l_word=%s buf=%s' % (l_word,buf))
                 buf += l_word
 
             else:
                 print('y-x > 1,l_word=%s buf=%s' % (l_word,buf))
                 if buf:
+                    print('buf.length=',len(buf))
                     if len(buf) == 1:
+                        # 这说明缓冲区存的那个词长度为1，说明上一步是单字词，否则buf一定会重置为空字符
+                        # 这里是当前词长度>1，前一个词长度=1的情况，先把前一个单字词返回，能取到词性就返回词性，取不到就设词性为x
                         yield pair(buf, self.word_tag_tab.get(buf, 'x'))
                     elif not self.tokenizer.FREQ.get(buf):
+                        # 缓冲区buf长度>1，
                         recognized = self.__cut_detail(buf)
                         for t in recognized:
                             yield t

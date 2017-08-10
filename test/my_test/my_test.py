@@ -51,7 +51,7 @@ jieba.cut 以及 jieba.cut_for_search 返回的结构都是一个可迭代的 ge
 
 if __name__ == '__main__':
     dict_path = '../../user_dict/user_dict.txt'
-    print(os.getcwd())
+    # print('当前路径=',os.getcwd())
     jieba.load_userdict(dict_path)
     # how_to_use()
     text_list = [
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         # '第三方富力地产加入交易，并且一起去参观了港珠澳大桥和粤港澳大湾区。',
         # '今天我开车去了北一环路',
         # '老百姓大药房的药很便宜，很适合老百姓去买。',
-        '老百姓大药房'
+        '老百姓不去药房'
         # '万科董事长王石和经理郁亮表示，公司目前和碧桂园还有恒大一起合作建造深圳地铁，目前共有10公里，整个项目包括了两个海底隧道'
     ]
     for text in text_list:

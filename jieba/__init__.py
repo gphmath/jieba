@@ -57,9 +57,9 @@ class Tokenizer(object):
             self.dictionary = dictionary
         else:
             self.dictionary = _get_abs_path(dictionary)
-        self.FREQ = {}
+        self.FREQ = {}  # 词-频数字典
         self.total = 0
-        self.user_word_tag_tab = {}
+        self.user_word_tag_tab = {}  # 词-词性字典
         self.initialized = False
         self.tmp_dir = None
         self.cache_file = None
@@ -169,7 +169,7 @@ class Tokenizer(object):
 
     def calc(self, sentence, DAG, route):
         """
-        计算路径概率？
+        计算每个位置的最大概率路径
         :param sentence: 
         :param DAG: 
         :param route: 
@@ -224,7 +224,7 @@ class Tokenizer(object):
 
     def get_DAG(self, sentence):
         """
-        生成词网：每个字的位置有一个列表，列表里存储了从当前位置往后所有可能组成的词语及其在字典中的频数：
+        生成词网：每个字的位置有一个列表，列表里存储了从当前位置往后所有可能组成的词语：
         句子是：老百姓大药房：
         【老，老百姓】
         【百，百姓】
@@ -424,6 +424,10 @@ class Tokenizer(object):
         return self.lcut_for_search(sentence, False)
 
     def get_dict_file(self):
+        """
+        
+        :return: 
+        """
         if self.dictionary == DEFAULT_DICT:
             return get_module_res(DEFAULT_DICT_NAME)
         else:
