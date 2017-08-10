@@ -6,7 +6,10 @@
 #     print(i)
 # x_max = max(t)
 # print(x_max)
-f=open('test_dict.txt','r',encoding='utf-8')
-for a,b in enumerate(f, 1):
-    print(a,b)
-f.close()
+# f=open('test_dict.txt','r',encoding='utf-8')
+# for a,b in enumerate(f, 1):
+#     print(a,b)
+# f.close()
+
+s='abc'
+print(len(s))

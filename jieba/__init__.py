@@ -170,9 +170,19 @@ class Tokenizer(object):
     def calc(self, sentence, DAG, route):
         """
         计算每个位置的最大概率路径
-        :param sentence: 
-        :param DAG: 
-        :param route: 
+        # 从而字典route=
+        # {
+        # 6: (0, 0),
+        # 5: (P(房), 5),
+        # 4: (P(药房)*1, 5),
+        # 3: (P(大)*P(药房)*1, 3),
+        # 2: (P(姓)*P(大)*P(药房)*1, 2),
+        # 1: (P(百姓)*P(大)*P(药房)*1, 2),
+        # 0: (P(老百姓)*P(大)*P(药房)*1, 2)
+        # }
+        :param sentence: 要切分的短句子（已经不含标点空格换行符等）
+        :param DAG: 传入之前的词网
+        :param route: 上面的记录了每个位置到最后一个字的最大概率和最优组词位置
         :return: 
         """
         N = len(sentence)
@@ -246,7 +256,7 @@ class Tokenizer(object):
         :param sentence: 要分词的文本或者用户自定义词典的词条
         :return: 粗分词网DAG是一个字典，键是每个字的位置，值是每个字位置的可能组词的位置
         """
-        print('DAG传入sentence = ', sentence)
+        # print('DAG传入sentence = ', sentence)
         self.check_initialized()
         DAG = {}
         N = len(sentence)
